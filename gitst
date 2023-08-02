@@ -1,6 +1,6 @@
 #!/bin/sh
 
-r=$(git status 2>&1)
+r=$(git status --porcelain 2>&1)
 if [ -n "$r" ]; then
-    printf ' *** git working copy has changes: %s\n' "$r"
+    printf ' *** git working copy has changes:\n%s\n' "$r"
 fi
