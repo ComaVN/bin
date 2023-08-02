@@ -1,7 +1,16 @@
 #!/bin/sh
 
+set -e
+
 r=$(git status --porcelain 2>&1)
 if [ -n "$r" ]; then
     printf ' *** git working copy has changes:\n%s\n' "$r"
-    exit 1
+fi
+
+default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD)
+default_branch=$(printf '%s' "$default_branch" | sed 's/^origin\///')
+current_branch=$(git symbolic-ref --short HEAD)
+
+if [ "$current_branch" != "$default_branch" ]; then
+    printf ' *** current git branch is "%s", but the default branch is "%s"\n' "$current_branch" "$default_branch"
 fi
