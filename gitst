@@ -3,4 +3,5 @@
 r=$(git status --porcelain 2>&1)
 if [ -n "$r" ]; then
     printf ' *** git working copy has changes:\n%s\n' "$r"
+    exit 1
 fi
