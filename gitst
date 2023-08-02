@@ -1,0 +1,6 @@
+#!/bin/sh
+
+r=$(git status 2>&1)
+if [ -n "$r" ]; then
+    printf ' *** git working copy has changes: %s\n' "$r"
+fi
