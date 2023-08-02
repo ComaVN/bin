@@ -2,9 +2,11 @@
 
 set -e
 
+git fetch --prune --quiet --all > /dev/null
+
 r=$(git status --porcelain 2>&1)
 if [ -n "$r" ]; then
-    printf ' *** git working copy has changes:\n%s\n' "$r"
+    printf ' *** git working copy has changes:\n%s\n\n' "$r"
 fi
 
 default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD)
@@ -12,5 +14,12 @@ default_branch=$(printf '%s' "$default_branch" | sed 's/^origin\///')
 current_branch=$(git symbolic-ref --short HEAD)
 
 if [ "$current_branch" != "$default_branch" ]; then
-    printf ' *** current git branch is "%s", but the default branch is "%s"\n' "$current_branch" "$default_branch"
+    printf ' *** current git branch is "%s", but the default branch is "%s"\n\n' "$current_branch" "$default_branch"
+fi
+
+r=$(git status --porcelain --branch | egrep '^## [a-zA-Z0-9./_-]+') # get only branch info
+if printf '%s' "$r" | egrep --invert-match --quiet '^## [a-zA-Z0-9./_-]+\.\.\.[a-zA-Z0-9./_-]+'; then
+    printf ' *** current git branch "%s" does not have a remote tracking branch\n\n' "$current_branch"
+elif printf '%s' "$r" | egrep --quiet '^## [a-zA-Z0-9./_-]+ \[(ahead|behind|gone)'; then
+    printf ' *** current git branch is not in sync with remote:\n%s\n\n' "$r"
 fi
