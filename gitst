@@ -1,14 +1,26 @@
 #!/bin/sh
 
+# Helper script to check if a git working copy needs any attention.
+
 set -e
 
 git fetch --prune --quiet --all > /dev/null
 
 r=$(git status --porcelain 2>&1)
 if [ -n "$r" ]; then
-    printf ' *** git working copy has changes:\n%s\n\n' "$r"
+    printf ' *** git working copy has uncommited changes:\n%s\n\n' "$r"
 fi
 
+r=$(git stash list 2>&1)
+if [ -n "$r" ]; then
+    printf ' *** git working copy has stashed changes:\n%s\n\n' "$r"
+fi
+
+# RH: FIX: This can give "fatal: ref refs/remotes/origin/HEAD is not a symbolic ref".
+# See <https://stackoverflow.com/questions/17639383/how-to-add-missing-origin-head-in-git-repo/17639471#17639471>.
+# TL;DR: origin/HEAD only exists on cloned repos, and the remote might not even be called "origin"
+# To fix: check the existence of local branches "main" or "master", in that order, and use those.
+# If neither exists, assume "main".
 default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD)
 default_branch=$(printf '%s' "$default_branch" | sed 's/^origin\///')
 current_branch=$(git symbolic-ref --short HEAD)
