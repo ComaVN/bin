@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# Helper script to bring all git working copies under the current directory up to date with their default remote and
+# branch.
+# Will not do anything but warn about working copies that have local changes.
+
+set -e
+
+. git.include.sh
+
+git_pull() {
+    local git_dir=$1
+    local dir=$(dirname "$git_dir")
+    printf -- '\n'
+    printf -- '################################################################################\n'
+    printf -- '# %s:\n' "$dir"
+    printf -- '################################################################################\n'
+    cd "$dir"
+    git fetch --prune --quiet --all > /dev/null
+
+    r=$(git status --porcelain 2>&1)
+    if [ -n "$r" ]; then
+        printf -- ' *** git working copy has uncommited changes:\n%s\n\n' "$r" >&2
+        return
+    fi
+
+    default_remote=$(get_default_remote)
+    if [ -z "$default_remote" ]; then
+        printf -- ' *** git working copy has no remotes\n\n' >&2
+        return
+    fi
+    # echo "DEBUG: Default remote is '$default_remote'." >&2
+    default_branch=$(get_default_branch "$default_remote")
+    if [ -z "$default_branch" ]; then
+        printf -- ' *** git working copy has no suitable default branche\n\n' >&2
+        return
+    fi
+    # echo "DEBUG: Default branch is '$default_branch'." >&2
+    current_branch=$(git branch --show-current)
+    if [ -z "$current_branch" ]; then
+        printf -- ' *** git working copy has no current branch (probably rebasing and/or in detached HEAD state)\n\n' >&2
+        return
+    fi
+
+    if [ "$current_branch" != "$default_branch" ]; then
+        printf -- ' *** current git branch is "%s", but the default branch is "%s"\n\n' "$current_branch" "$default_branch" >&2
+        return
+    fi
+
+    r=$(git status --porcelain --branch | egrep '^## [a-zA-Z0-9./_-]+') # get only branch info
+    if printf -- '%s' "$r" | egrep --invert-match --quiet '^## [a-zA-Z0-9./_-]+\.\.\.[a-zA-Z0-9./_-]+'; then
+        printf -- ' *** current git branch "%s" does not have a remote tracking branch\n\n' "$current_branch" >&2
+        return
+    elif printf -- '%s' "$r" | egrep --quiet '^## [a-zA-Z0-9./_-]+ \[ahead'; then
+        printf -- ' *** current git branch is ahead of remote:\n%s\n\n' "$r" >&2
+        return
+    elif printf -- '%s' "$r" | egrep --quiet '^## [a-zA-Z0-9./_-]+ \[gone'; then
+        printf -- ' *** remote tracking branch of current git branch is gone:\n%s\n\n' "$r" >&2
+        return
+    fi
+    git pull
+}
+
+for d in $(find . -type d -name '.git'); do
+    (git_pull "$d")
+done
