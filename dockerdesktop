@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+# See https://docs.docker.com/desktop/install/ubuntu/#prerequisites for determining if this is still needed
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+# From /usr/share/applications/docker-desktop.desktop
+/opt/docker-desktop/bin/docker-desktop
