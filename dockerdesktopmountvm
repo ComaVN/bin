@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+sudo modprobe nbd
+sudo qemu-nbd --connect=/dev/nbd0 /home/roel/.docker/desktop/vms/0/data/Docker.raw
+
+# sudo qemu-nbd --disconnect /dev/nbd0
