@@ -4,4 +4,4 @@ set -e
 
 . k8s.include.sh
 
-echo $(get_all_non_event_resource_types)
+echo "$(get_all_non_event_resource_types)"

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+. k8s.include.sh
+
+if [ $# -lt 1 ]; then
+    echo "Must specify context and/or namespace"
+    exit 1
+fi
+
+# Poor man's topological sort
+resource_types=$(
+    echo cronjobs.batch
+    echo daemonsets.apps
+    echo deployments.apps
+    echo replicasets.app
+    echo statefulsets.apps
+    echo jobs.batch
+    get_all_non_event_resource_types \
+        | grep -v '^cronjobs\.batch$' \
+        | grep -v '^daemonsets\.apps$' \
+        | grep -v '^deployments\.apps$' \
+        | grep -v '^replicasets\.apps$' \
+        | grep -v '^statefulsets\.apps$' \
+        | grep -v '^jobs\.batch$' \
+        | grep -v '^persistentvolumeclaims$' \
+    ;
+    echo persistentvolumeclaims
+)
+
+for rt in $resource_types; do
+    kubectl "$@" delete "$rt" --all
+done
