@@ -9,8 +9,15 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+resource_types=$(get_all_non_event_resource_types)
 # Poor man's topological sort
+helm_resource_types=$(
+    printf -- '%s' "$resource_types" \
+        | grep '^helm' \
+    ;
+)
 resource_types=$(
+    echo "$helm_resource_types"
     echo cronjobs.batch
     echo daemonsets.apps
     echo deployments.apps
@@ -18,6 +25,7 @@ resource_types=$(
     echo statefulsets.apps
     echo jobs.batch
     get_all_non_event_resource_types \
+        | grep -v '^helm' \
         | grep -v '^cronjobs\.batch$' \
         | grep -v '^daemonsets\.apps$' \
         | grep -v '^deployments\.apps$' \
@@ -28,6 +36,7 @@ resource_types=$(
     ;
     echo persistentvolumeclaims
 )
+
 
 for rt in $resource_types; do
     kubectl "$@" delete "$rt" --all
