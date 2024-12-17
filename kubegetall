@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+. k8s.include.sh
+
+for rt in $(get_all_non_event_resource_types); do
+    echo " * $rt:"
+    kubectl "$@" get "$rt"
+done
